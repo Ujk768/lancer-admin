@@ -11,16 +11,18 @@ import type {
 // ---- Student/user routes ----
 
 // GET /challenge/me — challenges the logged-in user is registered for
-export async function getUserChallenges(): Promise<UserChallengeParticipation[]> {
+export async function getUserChallenges(): Promise<
+  UserChallengeParticipation[]
+> {
   const res = await api.get<{ participations: UserChallengeParticipation[] }>(
-    "/challenge/me"
+    "/challenge/me",
   );
   return res.data.participations;
 }
 
 // POST /challenge/:challengeId/register
 export async function registerForChallenge(
-  challengeId: string
+  challengeId: string,
 ): Promise<ChallengeParticipant> {
   const res = await api.post<{
     success: boolean;
@@ -32,21 +34,22 @@ export async function registerForChallenge(
 
 // GET /challenge/:challengeId/leaderboard
 export async function getChallengeLeaderboard(
-  challengeId: string
+  challengeId: string,
 ): Promise<LeaderboardEntry[]> {
-  const res = await api.get<{ challengeId: string; leaderboard: LeaderboardEntry[] }>(
-    `/challenge/${challengeId}/leaderboard`
-  );
+  const res = await api.get<{
+    challengeId: string;
+    leaderboard: LeaderboardEntry[];
+  }>(`/challenge/${challengeId}/leaderboard`);
   return res.data.leaderboard;
 }
 
 // POST /challenge/category — body: { category }
 export async function getChallengesByCategory(
-  category: string
+  category: string,
 ): Promise<Challenge[]> {
   const res = await api.post<{ success: boolean; challenges: Challenge[] }>(
     "/challenge/category",
-    { category }
+    { category },
   );
   return res.data.challenges;
 }
@@ -54,7 +57,7 @@ export async function getChallengesByCategory(
 // POST /challenge/:challengeId/submit-points — body: { pointsSubmitted }
 export async function submitChallengePoints(
   challengeId: string,
-  pointsSubmitted: number
+  pointsSubmitted: number,
 ): Promise<ChallengeParticipant> {
   const res = await api.post<{
     success: boolean;
@@ -68,16 +71,17 @@ export async function submitChallengePoints(
 
 // GET /challenge/active
 export async function getActiveChallenges(): Promise<Challenge[]> {
-  const res = await api.get<{ success: boolean; activeChallenges: Challenge[] }>(
-    "/challenge/active"
-  );
+  const res = await api.get<{
+    success: boolean;
+    activeChallenges: Challenge[];
+  }>("/challenge/active");
   return res.data.activeChallenges;
 }
 
 // GET /challenge/all
 export async function getAllChallenges(): Promise<Challenge[]> {
   const res = await api.get<{ success: boolean; allChallenges: Challenge[] }>(
-    "/challenge/all"
+    "/challenge/all",
   );
   return res.data.allChallenges;
 }
@@ -86,28 +90,38 @@ export async function getAllChallenges(): Promise<Challenge[]> {
 
 // GET /challenge/:challengeId/participants (requires admin role)
 export async function getChallengeParticipants(
-  challengeId: string
+  challengeId: string,
 ): Promise<ParticipantWithUser[]> {
   const res = await api.get<{ participants: ParticipantWithUser[] }>(
-    `/challenge/${challengeId}/participants`
+    `/challenge/${challengeId}/participants`,
   );
   return res.data.participants;
 }
 
 // POST /challenge/add (requires admin role)
 export async function createChallenge(
-  payload: CreateChallengePayload
+  payload: CreateChallengePayload,
 ): Promise<Challenge> {
   const res = await api.post<{ success: boolean; challenge: Challenge }>(
     "/challenge/add",
-    payload
+    payload,
   );
   return res.data.challenge;
 }
 
-export async function getPendingChallenges() : Promise<Challenge[]> {
+export async function getPendingChallenges(): Promise<Challenge[]> {
   const res = await api.get<{ success: boolean; pending: Challenge[] }>(
-    "/challenge/pending"
+    "/challenge/pending",
   );
   return res.data.pending;
 }
+
+export const getChallengeById = async (
+  challengeId: string,
+): Promise<Challenge> => {
+    console.log("caleld with ",challengeId)
+  const res = await api.get<{ success: boolean; challenge: Challenge }>(
+    `/challenge/${challengeId}`,
+  );
+  return res.data.challenge;
+};

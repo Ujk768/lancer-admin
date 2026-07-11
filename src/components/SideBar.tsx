@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import Logo from "./Logo";
 import Icon, { paths } from "./Icon";
+import { useAuth } from "../context/AuthContext";
 
 const NAV = [
   { to: "/app", label: "Overview", icon: "overview", end: true },
@@ -14,8 +15,8 @@ const NAV = [
 
 
 const getAdminInfo = ()=>{
-    const admin = JSON.parse(localStorage.getItem("user") || "{}");
-    return admin;
+    const {user } = useAuth()
+    return user;
 }
 
 export default function SideBar({
@@ -28,8 +29,8 @@ export default function SideBar({
     
     const admin = getAdminInfo();
     
-    const initials = admin.name
-      .split(" ")
+    const initials = admin && admin.name
+      ?.split(" ")
       .map((p) => p[0])
       .slice(0, 2)
       .join("");
@@ -64,8 +65,8 @@ export default function SideBar({
       <div className="sidebar-user">
         <div className="avatar">{initials}</div>
         <div className="who">
-          <b>{admin.name}</b>
-          <span>{admin.role}</span>
+          <b>{admin?.name}</b>
+          <span>{admin?.role}</span>
         </div>
         <button
           className="signout"

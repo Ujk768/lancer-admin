@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 // import { listChallenges, deleteChallenge } from "../api/client";
 // import { groupBySeason, formatDate } from "../api/seasons";
-import { CHALLENGE_IMAGE_FALLBACK } from "../components/challengeImages";
+import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../components/challengeImages";
 // import { useToast } from "../components/Toast";
 import ConfirmDialog from "../components/ComfirmDialog";
 // import SeasonBadge, { seasonAccent } from "../components/SeasonBadge";
@@ -28,16 +28,6 @@ export default function Challenges() {
       //   toast.error(err.message || "Could not load challenges.");
       setChallenges([]);
     }
-  }
-
-  function formatDate(dateString: string): string {
-    const d = new Date(dateString + "T00:00:00");
-    if (Number.isNaN(d.getTime())) return dateString;
-    return d.toLocaleDateString("en-CA", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
   }
 
   useEffect(() => {
@@ -114,7 +104,7 @@ export default function Challenges() {
             <article className="challenge-card" key={c.challengeId}>
               <button
                 className="cc-clickable"
-                onClick={() => navigate(`/app/challenges/${c.challengeId}`)}
+                onClick={() => navigate(`/app/challenge/${c.challengeId}`)}
                 aria-label={`Open ${c.challengeName}`}
               >
                 <div

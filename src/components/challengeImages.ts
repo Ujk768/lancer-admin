@@ -49,3 +49,16 @@ export const CHALLENGE_IMAGE_FALLBACK = u("1517838277536-f5f99be501cd");
 export function imagesForType(type: keyof typeof CHALLENGE_IMAGE_BANK): string[] {
   return CHALLENGE_IMAGE_BANK[type] || CHALLENGE_IMAGE_BANK.Gym;
 }
+
+export function formatDate(dateString: string): string {
+  // Pass directly; JavaScript natively handles ISO strings
+  const d = new Date(dateString);
+  
+  if (Number.isNaN(d.getTime())) return dateString;
+  
+  return d.toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
