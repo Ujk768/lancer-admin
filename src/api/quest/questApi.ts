@@ -43,3 +43,10 @@ export async function activateQuest(questId: number): Promise<Quest> {
   );
   return res.data.data;
 }
+
+export async function deActivateQuest(questId: number): Promise<Quest> {
+  const res = await api.post<{ success: boolean; data: Quest; message: string }>(
+    `/quest/${questId}/deactivate`
+  );
+  return res.data.data;
+}

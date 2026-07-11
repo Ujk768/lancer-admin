@@ -9,6 +9,7 @@ import { getPendingChallenges } from "./api/challenges/challengeApi";
 import Challenges from "./pages/Challenges";
 import CreateChallenge from "./pages/CreateChallenge";
 import ChallengeDetail from "./pages/ChallengeDetail";
+import Quests from "./pages/Quests";
 
 function App() {
   const [pendingCount, setpendingCount] = useState(0);
@@ -42,6 +43,7 @@ function App() {
                   element={<CreateChallenge />}
                 />
                 <Route path="/app/challenge/:id" element={<ChallengeDetail />}/>
+                <Route path="/app/quests" element={<Quests />} />
               </Route>
             </Routes>
           </main>

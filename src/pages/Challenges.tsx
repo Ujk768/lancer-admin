@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 // import { listChallenges, deleteChallenge } from "../api/client";
 // import { groupBySeason, formatDate } from "../api/seasons";
-import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../components/challengeImages";
+import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../utils";
 // import { useToast } from "../components/Toast";
 import ConfirmDialog from "../components/ComfirmDialog";
 // import SeasonBadge, { seasonAccent } from "../components/SeasonBadge";

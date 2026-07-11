@@ -15,7 +15,7 @@ import { createChallenge } from "../api/challenges/challengeApi";
 import {
   CHALLENGE_IMAGE_BANK,
   imagesForType,
-} from "../components/challengeImages";
+} from "../utils";
 
 // Challenge creation. Every challenge carries an image. The admin picks from
 // type-matched suggestions, pastes a URL, or uploads a file. Podium points are

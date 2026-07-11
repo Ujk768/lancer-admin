@@ -1,3 +1,17 @@
+export const QUEST_CATEGORIES = [
+  "Cardio",
+  "Strength",
+  "Core",
+  "Mobility",
+  "Recovery",
+  "Conditioning",
+  "Swimming",
+  "Yoga",
+  "Gym",
+  "Classes",
+  "Lifestyle",
+];
+
 // Challenge image bank. When an admin creates a challenge, a handful of images
 // matching the activity type are presented for one-tap selection. They can also
 // paste any image URL or pick from their own files. Every challenge carries an

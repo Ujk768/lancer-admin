@@ -1,4 +1,3 @@
-
 export interface Quest {
   questId: number;
   title: string;

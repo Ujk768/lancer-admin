@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getChallengeById, getChallengeParticipants } from "../api/challenges/challengeApi";
 // import { formatDate, seasonOf } from "../api/seasons";
 // import { CHALLENGE_IMAGE_FALLBACK } from "";
-import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../components/challengeImages";
+import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../utils";
 // import { useToast } from "../components/Toast";
 // import { LeaderboardPodium, LeaderboardList } from "../components/LeaderboardBoard";
 // import SeasonBadge, { seasonAccent } from "../components/SeasonBadge";
