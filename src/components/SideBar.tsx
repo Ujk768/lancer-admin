@@ -28,7 +28,7 @@ export default function SideBar({
 }) {
     
     const admin = getAdminInfo();
-    
+    console.log("admin",admin)
     const initials = admin && admin.name
       ?.split(" ")
       .map((p) => p[0])

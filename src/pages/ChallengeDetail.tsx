@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getChallengeById, getChallengeParticipants } from "../api/challenges/challengeApi";
+import { getChallengeById, getChallengeParticipants ,getChallengeLeaderboard} from "../api/challenges/challengeApi";
 // import { formatDate, seasonOf } from "../api/seasons";
 // import { CHALLENGE_IMAGE_FALLBACK } from "";
 import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../utils";
@@ -8,7 +8,7 @@ import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../utils";
 // import { LeaderboardPodium, LeaderboardList } from "../components/LeaderboardBoard";
 // import SeasonBadge, { seasonAccent } from "../components/SeasonBadge";
 import Icon from "../components/Icon";
-import type { Challenge } from "../api/challenges/challengeTypes";
+import type { Challenge, LeaderboardEntry } from "../api/challenges/challengeTypes";
 import { useAuth } from "../context/AuthContext";
 
 // Detail view for a single challenge. Shows the challenge image, its stored
@@ -21,7 +21,7 @@ export default function ChallengeDetail() {
   const {user} = useAuth()
 //   const toast = useToast();
   const [challenge, setChallenge] = useState<Challenge>();
-  const [board, setBoard] = useState(undefined); // undefined = loading, null = none
+  const [board, setBoard] = useState<LeaderboardEntry[]>(); // undefined = loading, null = none
   const [notFound, setNotFound] = useState(false);
   const [participants,setParticipants] = useState(0);
 
@@ -36,6 +36,8 @@ export default function ChallengeDetail() {
         // setBoard(b);
         const parti = await getChallengeParticipants(id || "1")
         parti ? setParticipants(parti.length) : ""
+        const leaderboard = await getChallengeLeaderboard(id || "1")
+        setBoard(leaderboard);
       } catch (err) {
         // setNotFound(true);
         // toast.error(err.message || "That challenge could not be loaded.");
@@ -107,7 +109,7 @@ export default function ChallengeDetail() {
               {!isCompleted && <span className="pill pill-gold">Updating</span>}
             </div>
 
-            {/* {board === undefined ? (
+            {board === undefined ? (
               <div style={{ padding: 24, display: "grid", gap: 12 }}>
                 <div className="skeleton" /><div className="skeleton" style={{ width: "70%" }} />
               </div>
@@ -121,14 +123,14 @@ export default function ChallengeDetail() {
             ) : (
               <>
                 <div style={{ borderBottom: "1px solid var(--line)" }}>
-                  <LeaderboardPodium entries={board.entries} />
+                  {/* <LeaderboardPodium entries={board.entries} /> */}
                 </div>
                 <div className="lb-list-head">
                   <span>Rank</span><span>Student</span><span>Result</span><span>XP</span>
                 </div>
-                <LeaderboardList entries={board.entries} showXp={isCompleted} />
+                {/* <LeaderboardList entries={board.entries} showXp={isCompleted} /> */}
               </>
-            )} */}
+            )}
           </div>
         </div>
 

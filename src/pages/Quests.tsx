@@ -92,16 +92,18 @@ export default function Quests() {
 
   async function swapInto(slotIndex: number, quest: Quest) {
     try {
+        console.log("inside swap into")
       const ids = today.map((q) => q.questId);
-      if (ids.includes(quest.questId)) {
-        // toast.error("That quest is already in today's rotation.");
-        return;
-      }
+    //   if (ids.includes(quest.questId)) {
+    //     // toast.error("That quest is already in today's rotation.");
+    //     return;
+    //   }
       ids[slotIndex] = quest.questId;
       //   const updat     ed = await setDailyQuests(dateKey, ids);
       const deactivate = await deActivateQuest(today[slotIndex].questId);
-      const currentQuests = today;
+      const currentQuests = [...today];
       currentQuests[slotIndex] = quest
+      console.log("currentQuests",currentQuests)
       setToday(currentQuests);
       const activate = await activateQuest(quest.questId)
     } catch (err) {
@@ -123,10 +125,6 @@ export default function Quests() {
   const filteredBank = (bank || []).filter((q) =>
     q.title.toLowerCase().includes(search.toLowerCase()),
   );
-
-  useEffect(()=>{
-    console.log("today",today)
-  },[today])
 
   return (
     <>
