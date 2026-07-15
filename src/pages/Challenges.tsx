@@ -1,31 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// import { listChallenges, deleteChallenge } from "../api/client";
-// import { groupBySeason, formatDate } from "../api/seasons";
 import { CHALLENGE_IMAGE_FALLBACK, formatDate } from "../utils";
-// import { useToast } from "../components/Toast";
 import ConfirmDialog from "../components/ComfirmDialog";
-// import SeasonBadge, { seasonAccent } from "../components/SeasonBadge";
 import Icon from "../components/Icon";
-import { getAllChallenges } from "../api/challenges/challengeApi";
+import { getAllChallenges, deleteChallenge } from "../api/challenges/challengeApi";
 import type { Challenge } from "../api/challenges/challengeTypes";
 
-// All challenges as image cards, grouped by season. Seasons are derived from
-// each start date and headed with a custom season crest, so grouping always
-// follows the calendar with no stored season field.
+// All challenges as image cards. Field names now match the backend's
+// serializeChallenge() output exactly, so images, titles, categories and
+// participant counts all render.
 
 export default function Challenges() {
-  //   const toast = useToast();
   const navigate = useNavigate();
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[] | null>(null);
   const [toDelete, setToDelete] = useState<Challenge | null>(null);
   const [filter, setFilter] = useState("all");
 
   async function load() {
     try {
       setChallenges(await getAllChallenges());
-    } catch (err) {
-      //   toast.error(err.message || "Could not load challenges.");
+    } catch {
       setChallenges([]);
     }
   }
@@ -34,22 +28,21 @@ export default function Challenges() {
     load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  //   async function confirmDelete() {
-  //     const target = toDelete;
-  //     setToDelete(null);
-  //     try {
-  //       await deleteChallenge(target.id);
-  //       toast.success(`"${target.title}" was removed.`, "Challenge removed");
-  //       load();
-  //     } catch (err) {
-  //       toast.error(err.message || "Could not remove that challenge.");
-  //     }
-  //   }
+  async function confirmDelete() {
+    const target = toDelete;
+    setToDelete(null);
+    if (!target) return;
+    try {
+      await deleteChallenge(target.id);
+      load();
+    } catch {
+      // no-op: could surface a toast here
+    }
+  }
 
   const filtered = (challenges || []).filter(
     (c) => filter === "all" || c.status === filter,
   );
-  //   const seasons = groupBySeason(filtered);
 
   return (
     <>
@@ -100,17 +93,17 @@ export default function Challenges() {
         </div>
       ) : (
         <div className="challenge-grid">
-          {challenges.map((c) => (
-            <article className="challenge-card" key={c.challengeId}>
+          {filtered.map((c) => (
+            <article className="challenge-card" key={c.id}>
               <button
                 className="cc-clickable"
-                onClick={() => navigate(`/app/challenge/${c.challengeId}`)}
-                aria-label={`Open ${c.challengeName}`}
+                onClick={() => navigate(`/app/challenge/${c.id}`)}
+                aria-label={`Open ${c.title}`}
               >
                 <div
                   className="cc-image"
                   style={{
-                    backgroundImage: `url(${c.challengeImage || CHALLENGE_IMAGE_FALLBACK})`,
+                    backgroundImage: `url(${c.imageUrl || CHALLENGE_IMAGE_FALLBACK})`,
                   }}
                 >
                   <span
@@ -119,37 +112,36 @@ export default function Challenges() {
                     {c.status}
                   </span>
                   <div className="cc-image-foot">
-                    <span className="pill pill-navy">{c.category}</span>
-                    {/* {c.requiresValidation && (
+                    {c.category && <span className="pill pill-navy">{c.category}</span>}
+                    {c.requiresValidation && (
                       <span className="pill pill-gold">Staff validated</span>
-                    )} */}
+                    )}
                   </div>
                 </div>
                 <div className="cc-body">
-                  <h4>{c.challengeName}</h4>
+                  <h4>{c.title}</h4>
                   <p className="cc-goal">
-                    Goal: {c.challengeUnit} {c.pointsPerUnit}
+                    {c.pointsPerUnit} pts / {c.unit}
                   </p>
                   <div className="cc-meta">
                     <span>
                       {formatDate(c.startDate)} to {formatDate(c.endDate)}
                     </span>
                   </div>
-                  {/* <div className="cc-foot">
+                  <div className="cc-foot">
                     <div className="cc-podium mono" title="Podium points">
-                      <b>{c.podium.first}</b> / {c.podium.second} /{" "}
-                      {c.podium.third}
+                      <b>{c.podium.first}</b> / {c.podium.second} / {c.podium.third}
                     </div>
                     <div className="cc-participants">
                       <span className="mono">{c.participants}</span> joined
                     </div>
-                  </div> */}
+                  </div>
                 </div>
               </button>
               <button
                 className="cc-delete"
                 onClick={() => setToDelete(c)}
-                aria-label={`Remove ${c.challengeName}`}
+                aria-label={`Remove ${c.title}`}
               >
                 <Icon name="trash" size={14} />
               </button>
@@ -165,11 +157,11 @@ export default function Challenges() {
         title="Remove challenge"
         message={
           toDelete
-            ? `"${toDelete.challengeName}" and its standings will no longer be visible to students. This cannot be undone.`
+            ? `"${toDelete.title}" and its standings will no longer be visible to students. This cannot be undone.`
             : ""
         }
         confirmLabel="Remove challenge"
-        onConfirm={() => console.log("confirmDelete")}
+        onConfirm={confirmDelete}
         onCancel={() => setToDelete(null)}
       />
     </>
