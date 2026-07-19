@@ -60,8 +60,11 @@ export interface LeaderboardEntry {
     lastName: string;
     name: string;
     faculty?: string;
+    facultyKey?: string;
     nationality?: string;
     totalXp?: number;
+    level?: number;
+    avatarTier?: number;
   };
   points: number;
 }
