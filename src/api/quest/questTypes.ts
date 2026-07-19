@@ -1,24 +1,21 @@
+// src/api/questTypes.ts
+
 export interface Quest {
   questId: number;
   title: string;
-  description?: string;
-  points: number;
+  xp: number;
   category: string;
-  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface AddQuestPayload {
+export interface CreateQuestPayload {
   title: string;
-  description?: string;
-  points: number;
-  category: string;
+  xp: number;
+  category?: string;
 }
 
-export interface EditQuestPayload {
-  title?: string;
-  description?: string;
-  points?: number;
-  category?: string;
+export interface DailyQuests {
+  date: string;
+  quests: Quest[];
 }

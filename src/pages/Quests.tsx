@@ -14,12 +14,11 @@ import ConfirmDialog from "../components/ComfirmDialog";
 import Icon from "../components/Icon";
 import type { Quest } from "../api/quest/questTypes";
 import {
-  getActiveQuests,
-  getAllQuests,
-  addQuest,
-  deleteQuest,
-  activateQuest,
-  deActivateQuest,
+getAllQuests,
+getDailyQuests,
+clearDailyOverride,
+addQuest,
+setDailyQuests
 } from "../api/quest/questApi";
 
 // Daily quest management. Three quests rotate automatically from the bank
@@ -49,9 +48,10 @@ export default function Quests() {
       //   setBank(b);
       //   setToday(t);
       const quests = await getAllQuests();
-      const todayQuests = await getActiveQuests();
+      console.log(quests)
+      const todayQuests = await getDailyQuests();
       setBank(quests);
-      setToday(todayQuests);
+      setToday(todayQuests.quests);
     } catch (err) {
       //   toast.error(err.message || "Could not load the quest bank.");
       setBank([]);
@@ -69,8 +69,8 @@ export default function Quests() {
     try {
       await addQuest({
         title: title,
-        description: description,
-        points: points,
+        // description: description,
+        xp: points,
         category: category,
       });
       //   setNewQuest({ title: "", xp: "", category: QUEST_CATEGORIES[0] });
@@ -81,31 +81,31 @@ export default function Quests() {
     }
   }
 
-  async function confirmRemove(questId: number) {
-    try {
-      await deleteQuest(questId)
-    } catch (err) {
-        console.error("Error",err);
-      //   toast.error(err.message || "That quest could not be removed.");
-    }
-  }
+  // async function confirmRemove() {
+  //   try {
+  //     await clearDailyOverride()
+  //   } catch (err) {
+  //       console.error("Error",err);
+  //     //   toast.error(err.message || "That quest could not be removed.");
+  //   }
+  // }
 
   async function swapInto(slotIndex: number, quest: Quest) {
     try {
         console.log("inside swap into")
-      const ids = today.map((q) => q.questId);
+      const ids = today?.map((q) => q.questId);
     //   if (ids.includes(quest.questId)) {
     //     // toast.error("That quest is already in today's rotation.");
     //     return;
     //   }
       ids[slotIndex] = quest.questId;
       //   const updat     ed = await setDailyQuests(dateKey, ids);
-      const deactivate = await deActivateQuest(today[slotIndex].questId);
+      // const deactivate = await deActivateQuest(today[slotIndex].questId);
       const currentQuests = [...today];
       currentQuests[slotIndex] = quest
       console.log("currentQuests",currentQuests)
       setToday(currentQuests);
-      const activate = await activateQuest(quest.questId)
+      // const activate = await activateQuest(quest.questId)
     } catch (err) {
     //   toast.error(err.message || "The swap could not be saved.");
     }
@@ -161,7 +161,7 @@ export default function Quests() {
             ? [0, 1, 2].map((i) => (
                 <div key={i} className="skeleton" style={{ height: 90 }} />
               ))
-            : today.map((q, i) => (
+            : today?.map((q, i) => (
                 <div className="today-quest" key={q.questId}>
                   <div className="slot">SLOT {i + 1}</div>
                   <h4>{q.title}</h4>
@@ -173,7 +173,7 @@ export default function Quests() {
                       fontSize: 13,
                     }}
                   >
-                    +{q.points} XP · {q.category}
+                    +{q.xp} XP · {q.category}
                   </div>
                   <button
                     className="btn btn-ghost btn-sm"
@@ -245,7 +245,7 @@ export default function Quests() {
                     {q.category}
                   </div>
                 </div>
-                <span className="q-xp">+{q.points} XP</span>
+                <span className="q-xp">+{q.xp} XP</span>
                 {swapSlot !== null ? (
                   <button
                     className="btn btn-navy btn-sm"
