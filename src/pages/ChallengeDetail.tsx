@@ -12,6 +12,7 @@ import type {
   LeaderboardEntry,
 } from "../api/challenges/challengeTypes";
 import { getSocket } from "../api/socket";
+import AdminLeaderboardBoard, { type BoardRow } from "../components/AdminLeaderboardBoard";
 
 // Detail view for a single challenge. Shows the image, its stored facts, and
 // the full live standings. Field names now match the backend; the leaderboard
@@ -139,37 +140,22 @@ export default function ChallengeDetail() {
                 <div className="skeleton" />
                 <div className="skeleton" style={{ width: "70%" }} />
               </div>
-            ) : board.length === 0 ? (
-              <div className="empty">
-                <b>No standings yet</b>
-                {isCompleted
-                  ? "This challenge finished without recorded results."
-                  : "Standings appear here as students log and admins validate results."}
-              </div>
             ) : (
-              <>
-                <div className="lb-list-head">
-                  <span>Rank</span>
-                  <span>Student</span>
-                  <span>XP</span>
-                </div>
-                <div className="lb-list">
-                  {board.map((e) => (
-                    <div className={`lb-row${e.rank <= 3 ? " top" : ""}`} key={e.user.id}>
-                      <div className="lb-rank">{e.rank}</div>
-                      <div className="lb-id">
-                        <div>
-                          <div className="lb-id-name">{e.user.name}</div>
-                          {e.user.faculty && (
-                            <div className="lb-id-fac">{e.user.faculty}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="lb-xp mono">+{e.points}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
+              <AdminLeaderboardBoard
+                showResult
+                rows={(board || []).map((e) => ({
+                  key: e.user.id,
+                  rank: e.rank,
+                  name: e.user.name,
+                  xp: e.points,
+                  facultyKey: (e.user as { facultyKey?: string }).facultyKey,
+                  faculty: e.user.faculty || undefined,
+                  flagCode: e.user.nationality || undefined,
+                  level: (e.user as { level?: number }).level ?? Math.floor(((e.user.totalXp as number) || 0) / 2000) + 1,
+                  sub: e.user.faculty || undefined,
+                  result: challenge.unit ? `${e.points} ${challenge.unit}` : `${e.points}`,
+                } as BoardRow))}
+              />
             )}
           </div>
         </div>
