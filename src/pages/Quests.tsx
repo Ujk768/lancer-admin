@@ -14,11 +14,11 @@ import ConfirmDialog from "../components/ComfirmDialog";
 import Icon from "../components/Icon";
 import type { Quest } from "../api/quest/questTypes";
 import {
-getAllQuests,
-getDailyQuests,
-clearDailyOverride,
-addQuest,
-setDailyQuests
+  getAllQuests,
+  getDailyQuests,
+  clearDailyOverride,
+  addQuest,
+  setDailyQuests,
 } from "../api/quest/questApi";
 
 // Daily quest management. Three quests rotate automatically from the bank
@@ -42,13 +42,17 @@ export default function Quests() {
   const [formError, setFormError] = useState("");
   //   const dateKey = todayKey();
 
+  function todayKey(): string {
+    return new Date().toISOString().slice(0, 10); // "2026-07-20"
+  }
+
   async function load() {
     try {
       //   const [b, t] = await Promise.all([listQuestBank(), getDailyQuests(dateKey)]);
       //   setBank(b);
       //   setToday(t);
       const quests = await getAllQuests();
-      console.log(quests)
+      console.log(quests);
       const todayQuests = await getDailyQuests();
       setBank(quests);
       setToday(todayQuests.quests);
@@ -81,46 +85,33 @@ export default function Quests() {
     }
   }
 
-  // async function confirmRemove() {
-  //   try {
-  //     await clearDailyOverride()
-  //   } catch (err) {
-  //       console.error("Error",err);
-  //     //   toast.error(err.message || "That quest could not be removed.");
-  //   }
-  // }
-
   async function swapInto(slotIndex: number, quest: Quest) {
-    try {
-        console.log("inside swap into")
-      const ids = today?.map((q) => q.questId);
-    //   if (ids.includes(quest.questId)) {
-    //     // toast.error("That quest is already in today's rotation.");
-    //     return;
-    //   }
-      ids[slotIndex] = quest.questId;
-      //   const updat     ed = await setDailyQuests(dateKey, ids);
-      // const deactivate = await deActivateQuest(today[slotIndex].questId);
-      const currentQuests = [...today];
-      currentQuests[slotIndex] = quest
-      console.log("currentQuests",currentQuests)
-      setToday(currentQuests);
-      // const activate = await activateQuest(quest.questId)
-    } catch (err) {
-    //   toast.error(err.message || "The swap could not be saved.");
-    }
-  }
+  try {
+    const dateKey = todayKey();
+    const ids = today.map((q) => q.id);
 
-//   async function resetToday() {
-//     try {
-//       const t = await clearDailyOverride(dateKey);
-//       setToday(t);
-//       setOverridden(false);
-//     //   toast.success("Today's quests are back on automatic rotation.");
-//     } catch (err) {
-//     //   toast.error(err.message || "Could not reset today's rotation.");
-//     }
-//   }
+    ids[slotIndex] = quest.id;
+    await setDailyQuests(dateKey, ids);
+
+    const refreshed = await getDailyQuests(dateKey);
+    setToday(refreshed.quests);
+    setOverridden(true);
+    setSwapSlot(0);
+  } catch (err) {
+    console.error("Swap failed", err);
+  }
+}
+
+  //   async function resetToday() {
+  //     try {
+  //       const t = await clearDailyOverride(dateKey);
+  //       setToday(t);
+  //       setOverridden(false);
+  //     //   toast.success("Today's quests are back on automatic rotation.");
+  //     } catch (err) {
+  //     //   toast.error(err.message || "Could not reset today's rotation.");
+  //     }
+  //   }
 
   const filteredBank = (bank || []).filter((q) =>
     q.title.toLowerCase().includes(search.toLowerCase()),
@@ -196,8 +187,8 @@ export default function Quests() {
               padding: "10px 14px",
             }}
           >
-            Pick a quest from the bank below to place it in slot {swapSlot||0 + 1}{" "}
-            for today.
+            Pick a quest from the bank below to place it in slot{" "}
+            {swapSlot || 0 + 1} for today.
           </div>
         )}
       </div>
@@ -284,9 +275,7 @@ export default function Quests() {
               <span>Quest title</span>
               <input
                 value={title}
-                onChange={(e) =>
-                  setTitle(e.target.value)
-                }
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="Do 20 minutes on the stair climber"
               />
             </div>
@@ -297,9 +286,7 @@ export default function Quests() {
                   type="number"
                   min="1"
                   value={points}
-                  onChange={(e) =>
-                    setPoints(+e.target.value)
-                  }
+                  onChange={(e) => setPoints(+e.target.value)}
                   placeholder="40"
                 />
               </div>
@@ -307,9 +294,7 @@ export default function Quests() {
                 <span>Category</span>
                 <select
                   value={category}
-                  onChange={(e) =>
-                    setCategory(e.target.value)
-                  }
+                  onChange={(e) => setCategory(e.target.value)}
                 >
                   {QUEST_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -336,7 +321,7 @@ export default function Quests() {
             : ""
         }
         confirmLabel="Remove quest"
-        onConfirm={()=>console.log("onconfirm")}
+        onConfirm={() => console.log("onconfirm")}
         onCancel={() => console.log("oncancel")}
       />
     </>

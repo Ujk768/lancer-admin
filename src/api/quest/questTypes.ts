@@ -1,7 +1,7 @@
 // src/api/questTypes.ts
 
 export interface Quest {
-  questId: number;
+  id: number;
   title: string;
   xp: number;
   category: string;
