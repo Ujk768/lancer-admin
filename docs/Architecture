@@ -1,0 +1,108 @@
+Architecture
+============
+
+Shape
+-----
+
+A single page React application. No server rendering, no data framework, no
+global store. State is local to each page; shared state is limited to
+authentication.
+
+	main.tsx
+	  imports index.css
+	  renders <App />
+
+	App.tsx
+	  <BrowserRouter>
+	    <AuthProvider>
+	      /login                 public
+	      <AdminLayout>          everything else
+	        /app                 Overview
+	        /app/challenges      Challenges
+	        /app/challenges/new  CreateChallenge
+	        /app/challenge/:id   ChallengeDetail
+	        /app/validations     Validations
+	        /app/leaderboards    Leaderboards
+	        /app/quests          Quests
+	      *                      redirect to /app
+
+
+The authenticated shell
+-----------------------
+
+AdminLayout is the gate and the chrome in one component. It:
+
+* reads the auth context and redirects to /login when there is no user,
+* opens the Socket.IO connection only after a user exists,
+* fetches the pending validation count for the sidebar badge and refreshes it
+  on validation:submitted and validation:resolved,
+* renders the sidebar and an <Outlet /> for the current page,
+* tears the socket down on sign out.
+
+The reason the socket and the first API call live here rather than at the root
+is ordering. An earlier version fetched on first paint, before a token
+existed, and every request 401'd against the login screen. Nothing that
+requires a token should mount above AdminLayout.
+
+
+Authentication
+--------------
+
+context/AuthContext.tsx holds the current admin and exposes login, logout and
+isLoading. Tokens live in localStorage behind tokenStorage in api/client.ts;
+no component reads localStorage directly.
+
+The axios response interceptor handles expiry. On a 401 it attempts a single
+refresh, queues any concurrent requests behind that refresh, and replays them.
+If the refresh call itself fails it clears the tokens and dispatches a window
+event auth:logout, which AuthContext listens for and turns into a redirect.
+This is why a failed refresh does not recurse.
+
+
+Data flow
+---------
+
+A page owns its own data:
+
+	useEffect on mount   -> call src/api/<domain>/<x>Api.ts
+	                     -> set local state
+	socket event         -> call the same loader again
+	user action          -> call a mutating api function, then reload
+
+There is no cache and no optimistic update. Reloading after a mutation is
+deliberate: the server is the only source of truth for XP, standings and
+validation state, and every one of those can be changed by another admin or by
+a student while the page is open.
+
+Realtime subscriptions per page are listed in docs/pages.md and, from the
+server side, in the backend's docs/realtime.md.
+
+
+Directory rules
+---------------
+
+src/api/
+	One folder per domain. An Api.ts file with the calls, a Types.ts file
+	with the response shapes. api/client.ts is the shared axios instance and
+	token storage. api/socket.ts owns the single socket connection.
+
+src/pages/
+	One file per route. A page may hold layout, local state and effects. If a
+	block of markup is used by two pages it moves to components/.
+
+src/components/
+	Presentational and shared. Components take props and do not fetch, with
+	the deliberate exception of nothing at present. Keep it that way.
+
+src/context/
+	Cross-cutting state only. Today that is authentication.
+
+
+Public assets
+-------------
+
+public/avatars/faculty1..faculty9/1..5.png and public/facultyBadges/1..9.png
+are the real art shared with the mobile app. Vite serves public/ at the web
+root, so components reference them as /avatars/faculty3/4.png. They are
+copies, not a shared package; if the mobile art is updated these must be
+updated too.

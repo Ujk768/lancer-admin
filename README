@@ -1,0 +1,70 @@
+LancerFit admin console
+=======================
+
+Web console for Campus Recreation staff. Everything the student app shows is
+managed here: challenges and their podium rewards, the validation queue for
+supervised results, leaderboards, the daily quest bank and rotation, the
+facility activity catalogue, and admin accounts.
+
+React 19, TypeScript, Vite, React Router, axios, socket.io-client.
+Staff only. There is no student-facing route.
+
+
+Quick Start
+-----------
+
+	npm install
+	echo "VITE_API_PATH=http://localhost:8000/api" > .env
+	npm run dev              # http://localhost:5173
+
+	npm run build            # tsc -b && vite build
+	npm run preview
+	npm run lint
+
+VITE_API_PATH must end in /api. The socket origin is derived from it by
+stripping that suffix, so a wrong base URL produces a console that logs in but
+never updates live.
+
+
+Essential Documentation
+-----------------------
+
+All maintainer documentation lives in docs/:
+
+* docs/architecture.md    - routing, auth shell, data flow, realtime
+* docs/pages.md           - what every screen does and what it calls
+* docs/api-layer.md       - the client, tokens, refresh, adding a call
+* docs/design-system.md   - tokens, class families, icons, avatars
+* docs/operations.md      - environment, build, deployment
+* docs/maintenance.md     - known gaps, dead code, traps, work queue
+
+Read docs/architecture.md first, then docs/design-system.md before writing any
+markup. The styling rules here are strict and easy to break.
+
+
+Layout
+------
+
+	src/main.tsx         entry, mounts App, imports index.css
+	src/App.tsx          routes and the authenticated shell
+	src/index.css        the entire design system
+	src/api/             axios client, socket, one folder per domain
+	src/pages/           one file per route
+	src/components/      shared UI
+	src/context/         auth state
+	public/              avatar and faculty badge PNGs served at web root
+
+
+Conventions
+-----------
+
+* index.css is the only stylesheet. It is imported once, by main.tsx.
+  Creating a second stylesheet is the mistake this project has already made.
+* Styling is class based, using the families documented in
+  docs/design-system.md. Inline style is for one-off layout only.
+* No external icon library. Icons are hand-drawn SVG paths in
+  components/Icon.tsx.
+* No emoji in UI copy.
+* Every network call goes through src/api/. Pages never call axios directly.
+* A page that displays data another user can change subscribes to the
+  relevant socket event and refetches.
