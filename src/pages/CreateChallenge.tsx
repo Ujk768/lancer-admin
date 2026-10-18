@@ -1,68 +1,73 @@
-import { useEffect, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-// import { createChallenge } from "../api/client";
-// import { CHALLENGE_TYPES } from "../data/challenges";
-// import { imagesForType } from "../data/challengeImages";
-// import { APP_CONFIG } from "../data/config";
-// import { seasonOf } from "../api/seasons";
-// import { useToast } from "../components/Toast";
 import Icon from "../components/Icon";
 import {
   CHALLENGE_TYPES,
-  type CreateChallengePayload,
 } from "../api/challenges/challengeTypes";
 import { createChallenge } from "../api/challenges/challengeApi";
-import {
-  CHALLENGE_IMAGE_BANK,
-  imagesForType,
-} from "../utils";
+import { CHALLENGE_IMAGE_BANK, imagesForType } from "../utils";
 
 // Challenge creation. Every challenge carries an image. The admin picks from
-// type-matched suggestions, pastes a URL, or uploads a file. Podium points are
-// pre-filled and editable. Publishing broadcasts a push notification to all
-// users, confirmed in the success toast.
+// type-matched suggestions, pastes a URL, or uploads a file. The payload uses
+// the field names the backend reads first (title/description/imageUrl/unit...),
+// and now also sends category, goal, podium and the validation flag.
 
 export default function CreateChallenge() {
   const navigate = useNavigate();
-  const [form, setForm] = useState<CreateChallengePayload>();
   const [title, setTitle] = useState("");
   const [category, setCategory] =
     useState<keyof typeof CHALLENGE_IMAGE_BANK>("Gym");
   const [unit, setUnit] = useState("");
   const [pointsUnit, setPointsUnit] = useState(0);
+  const [goal, setGoal] = useState(0);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [challengeDesc, setChallengeDesc] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [venue,setVenue] = useState("")
-  const [instructorName,setInstructorName] = useState("")
+  const [venue, setVenue] = useState("");
+  const [instructorName, setInstructorName] = useState("");
+  const [requiresValidation, setRequiresValidation] = useState(true);
+  const [podiumFirst, setPodiumFirst] = useState(500);
+  const [podiumSecond, setPodiumSecond] = useState(300);
+  const [podiumThird, setPodiumThird] = useState(150);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const suggestions = imagesForType(category);
 
-  async function submit(e) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!title.trim()) return setError("Give the challenge a title.");
+    if (!unit.trim()) return setError("Set a unit (e.g. push-ups, laps, km).");
+    if (!startDate || !endDate) return setError("Set a start and end date.");
+
     setBusy(true);
     try {
-      const create = await createChallenge({
-        challengeName: title,
-        challengeDescription: challengeDesc,
-        challengeImage: imageUrl,
-        challengeUnit: unit,
+      await createChallenge({
+        title,
+        description: challengeDesc,
+        imageUrl,
+        unit,
         pointsPerUnit: pointsUnit,
-        startDate: startDate,
-        endDate: endDate,
+        goal,
+        category,
+        type: category,
+        startDate,
+        endDate,
         status: "active",
-        venue: venue,
-        instructorName: instructorName
+        venue,
+        instructorName,
+        requiresValidation,
+        podium: { first: podiumFirst, second: podiumSecond, third: podiumThird },
       });
       navigate("/app/challenges");
-      //   toast.success(`${notification.message}. Push notification sent to all users.`, "Challenge published");
-    } catch (err) {
+    } catch (err: any) {
       setError(
-        (err.message as string) || "The challenge could not be created.",
+        (err?.response?.data?.message as string) ||
+          (err?.message as string) ||
+          "The challenge could not be created.",
       );
     } finally {
       setBusy(false);
@@ -115,7 +120,9 @@ export default function CreateChallenge() {
                   <span>Activity type</span>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) =>
+                      setCategory(e.target.value as keyof typeof CHALLENGE_IMAGE_BANK)
+                    }
                   >
                     {CHALLENGE_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -148,6 +155,25 @@ export default function CreateChallenge() {
 
               <div className="grid grid-2">
                 <div className="field">
+                  <span>Goal (target units)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={goal}
+                    onChange={(e) => setGoal(+e.target.value)}
+                    placeholder="50"
+                  />
+                </div>
+                <div className="field">
+                  <span>&nbsp;</span>
+                  <div style={{ fontSize: 12, color: "var(--slate)" }}>
+                    e.g. 50 push-ups. Used for progress display.
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-2">
+                <div className="field">
                   <span>Start date</span>
                   <input
                     type="date"
@@ -164,12 +190,6 @@ export default function CreateChallenge() {
                   />
                 </div>
               </div>
-
-              {/* {season && (
-                <div style={{ fontSize: 13, color: "var(--slate)" }}>
-                  Filed under <span className="pill pill-gold">{season}</span> based on the start date.
-                </div>
-              )} */}
 
               <div className="field">
                 <span>Venue</span>
@@ -199,16 +219,41 @@ export default function CreateChallenge() {
                 />
               </div>
 
-              {/* <label className="check-line">
+              <div className="grid grid-3">
+                <div className="field">
+                  <span>Podium · 1st</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={podiumFirst}
+                    onChange={(e) => setPodiumFirst(+e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <span>Podium · 2nd</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={podiumSecond}
+                    onChange={(e) => setPodiumSecond(+e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <span>Podium · 3rd</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={podiumThird}
+                    onChange={(e) => setPodiumThird(+e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <label className="check-line">
                 <input
                   type="checkbox"
-                  checked={form.requiresValidation}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      requiresValidation: e.target.checked,
-                    }))
-                  }
+                  checked={requiresValidation}
+                  onChange={(e) => setRequiresValidation(e.target.checked)}
                 />
                 <span>
                   <b>Requires staff validation.</b>{" "}
@@ -218,7 +263,7 @@ export default function CreateChallenge() {
                     approves it in Validations.
                   </span>
                 </span>
-              </label> */}
+              </label>
             </div>
 
             <div className="card card-pad">
@@ -252,9 +297,7 @@ export default function CreateChallenge() {
                 ))}
               </div>
               <div className="image-tools">
-                <div
-                  style={{ display: "flex", gap: 4, flex: 1, minWidth: 260 }}
-                >
+                <div style={{ display: "flex", gap: 4, flex: 1, minWidth: 260 }}>
                   <input
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
@@ -267,15 +310,6 @@ export default function CreateChallenge() {
                       fontSize: 13,
                     }}
                   />
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      console.log("linked");
-                    }}
-                  >
-                    Link
-                  </button>
                 </div>
                 <label
                   className="btn btn-ghost btn-sm"
@@ -285,7 +319,13 @@ export default function CreateChallenge() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={() => console.log("file upload")}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => setImageUrl(String(reader.result));
+                      reader.readAsDataURL(file);
+                    }}
                     style={{ display: "none" }}
                   />
                 </label>
@@ -306,9 +346,7 @@ export default function CreateChallenge() {
               </div>
               <div className="preview-body">
                 <span className="eyebrow">Live preview</span>
-                <p
-                  style={{ fontSize: 13, color: "var(--slate)", marginTop: 6 }}
-                >
+                <p style={{ fontSize: 13, color: "var(--slate)", marginTop: 6 }}>
                   {unit && pointsUnit
                     ? `${pointsUnit} points per ${unit}`
                     : "Set a Unit and Points Per Unit"}
@@ -326,7 +364,8 @@ export default function CreateChallenge() {
                 }}
               />
               <div style={{ fontSize: 13, color: "var(--slate)" }}>
-                Publishing sends a push notification to every LancerFit user.
+                Publishing broadcasts the challenge to every LancerFit user in
+                real time.
               </div>
             </div>
 

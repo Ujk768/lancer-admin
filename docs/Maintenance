@@ -1,0 +1,128 @@
+Maintenance
+===========
+
+Read this before assuming any part of the console is finished.
+
+
+Missing pages
+-------------
+
+src/components/SideBar.tsx renders seven nav items. Two of them point at
+routes that do not exist in App.tsx:
+
+	/app/activities   Activities
+	/app/settings     Settings
+
+Both currently hit the catch-all and redirect to Overview, so the sidebar
+advertises features a user cannot reach. The backend endpoints already exist:
+
+	Activities   GET/POST/DELETE /area, POST/DELETE /area/:id/activity
+	             the facility areas and their sub-activities the mobile log
+	             screen browses
+	Settings     GET/POST/DELETE /admin, admin account management
+
+Building these two pages is the largest outstanding item in this repository.
+Until they exist, either build them or remove the nav entries; leaving broken
+links is the worse of the three options.
+
+
+Dead code to remove
+-------------------
+
+Verified unreachable from src/main.tsx.
+
+	src/App.css
+		Imported by nothing. main.tsx imports index.css and only index.css.
+		Styles written here silently do not apply. This file has already
+		caused one full rebuild of the leaderboard. Delete it.
+
+	src/components/LeaderBoard.tsx
+		Superseded by AdminLeaderboardBoard.tsx. Not imported anywhere.
+
+	src/components/StudentIdentity.tsx
+		Only consumer was LeaderBoard.tsx.
+
+	src/components/Glyphs.tsx
+		Only reachable through LeaderBoard.tsx and StudentIdentity.tsx. Its
+		six-faculty registry was superseded by the nine-faculty
+		facultyTheme.ts. facultyTheme.ts mentions Glyphs in comments only.
+
+	src/components/KnightAvatar.tsx
+		The SVG avatar used before the real PNGs were brought in. Only
+		reachable through the dead files above. FacultyAvatar.tsx renders the
+		PNGs and is what every live board uses.
+
+	src/components/ProtectedRoute.tsx
+		The route guard from the pre-AdminLayout routing. App.tsx now gates
+		inside AdminLayout. Referenced only from the commented-out block at
+		the top of App.tsx.
+
+	src/context/ToastContext.tsx
+		Written but never added to the provider tree and never consumed.
+		Either wire it into main.tsx and adopt it consistently, or delete it.
+		Half-present infrastructure is worse than none.
+
+	src/assets/react.svg, src/assets/vite.svg
+		Vite scaffold leftovers.
+
+	src/assets/hero.png
+		Not referenced from any source file.
+
+	public/icons.svg
+		Not referenced from index.html or any component. Icons are inline
+		paths in components/Icon.tsx.
+
+	The commented-out block at the top of src/App.tsx
+		About fifty lines of the previous routing implementation. Git has it.
+
+Unused exports, safe to prune once the dead files above are gone:
+
+	api/challenges/challengeApi.ts   getUserChallenges, registerForChallenge,
+	                                 submitChallengePoints,
+	                                 getChallengesByCategory
+	                                 These are student-side operations. The
+	                                 admin console never calls them and the
+	                                 endpoints are student-scoped.
+	api/activities/activityApi.ts    createActivity, awardActivityPoints
+	                                 createActivity becomes live the moment
+	                                 the Activities page is built; keep it.
+	components/facultyTheme.ts       FACULTY_THEME, FACULTY_KEY_BY_VALUE,
+	                                 facultyKeyFrom, avatarVariantFromLevel
+	                                 Flagged as unused only because the
+	                                 components that consume them were among
+	                                 the dead files. Recheck after removal.
+
+
+Traps
+-----
+
+* App.css. Stated twice on purpose.
+
+* Season grouping on the Challenges page duplicates the backend's
+  utils/season.ts. Two copies of one rule. Change both or neither.
+
+* Avatar tier boundaries duplicate the backend's ladder. Same warning.
+
+* The avatar and badge PNGs in public/ are copies of the mobile app's assets.
+  Nothing syncs them.
+
+* Socket listeners must be removed in the effect cleanup. Missing cleanup
+  produces duplicate refetches that grow with every navigation.
+
+* Nothing above AdminLayout may call an authenticated endpoint. The pending
+  count and the socket live there because an earlier version fetched before a
+  token existed and 401'd on the login screen.
+
+* One file is misspelled: components/ComfirmDialog.tsx exports ConfirmDialog.
+  Renaming the file touches four imports. Do it in its own commit.
+
+
+Work queue
+----------
+
+	1. Build the Activities page on the /area endpoints
+	2. Build the Settings page on the /admin endpoints
+	3. Delete the dead files listed above, starting with App.css
+	4. Decide on ToastContext: adopt or remove
+	5. Rename ComfirmDialog.tsx
+	6. Extract the season rule so it is stated in one place per repository

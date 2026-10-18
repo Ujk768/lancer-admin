@@ -1,0 +1,151 @@
+Pages
+=====
+
+One file per route in src/pages/. For each: what staff do there, what it
+calls, and what it listens to.
+
+
+Login  /login
+-------------
+
+src/pages/Login.tsx
+
+Staff email and password against the admin login endpoint. On success the
+token pair is stored and the router sends the user to /app. Any failure is
+shown inline; there is no separate error route.
+
+	calls     useAuth().login -> POST /admin/login
+	realtime  none
+
+
+Overview  /app
+--------------
+
+src/pages/Overview.tsx
+
+The landing dashboard. Counts and shortcuts across the three things staff
+touch daily: challenges, the quest bank, and the activity catalogue.
+
+	calls     getAllChallenges, getPendingApprovals,
+	          getAllQuests, getAllActivities
+	realtime  none directly; the sidebar's pending badge is live
+
+
+Challenges  /app/challenges
+---------------------------
+
+src/pages/Challenges.tsx
+
+The challenge library, grouped by season. Cards show the image, window,
+participant count and status, and link into the detail view. Delete is behind
+a confirmation dialog.
+
+	calls     getAllChallenges, deleteChallenge
+	realtime  none
+
+Season grouping uses the same rule as the backend's utils/season.ts. If one
+changes the other must.
+
+
+Create challenge  /app/challenges/new
+-------------------------------------
+
+src/pages/CreateChallenge.tsx
+
+The largest form in the console. Captures name, description, type and
+category, goal and unit, points per unit, start and end dates, venue and
+instructor, whether the result requires staff validation, the XP reward, and
+the three podium values. Images are picked from a curated bank rather than
+uploaded, with suggestions filtered by challenge type.
+
+	calls     createChallenge
+	realtime  none
+
+Creating a challenge causes the backend to notify every student, by socket and
+by push. Staff should be told that publishing is a broadcast; the form has a
+note to that effect and it should stay there.
+
+
+Challenge detail  /app/challenge/:id
+------------------------------------
+
+src/pages/ChallengeDetail.tsx
+
+One challenge: hero image, facts panel, podium rewards, and the live standings
+board with avatars, flags, faculty labels and results.
+
+	calls     getChallengeById, getChallengeLeaderboard,
+	          getChallengeParticipants
+	realtime  validation:resolved, validation:submitted,
+	          challenge:participants
+
+Standings are rendered by AdminLeaderboardBoard in showResult mode so the
+submitted figure appears next to each student.
+
+
+Validations  /app/validations
+-----------------------------
+
+src/pages/Validations.tsx
+
+The staff work queue. Every supervised result a student has submitted and no
+one has judged. Approve pushes the points to the leaderboard; reject sends it
+back. Both are behind a confirmation dialog because neither is reversible from
+this screen.
+
+	calls     getPendingApprovals, approveParticipant, rejectParticipant
+	realtime  validation:submitted, validation:resolved
+
+This is the page that must never show stale data, which is why it subscribes
+to both events rather than only to the one it causes.
+
+
+Leaderboards  /app/leaderboards
+-------------------------------
+
+src/pages/Leaderboards.tsx
+
+Three tabs. Faculty groups students by faculty; Campus is the individual
+standing; Challenges shows the board for any single challenge.
+
+	calls     getFacultyLeaderboard, getCampusLeaderboard,
+	          getAllChallenges, getChallengeLeaderboard
+	realtime  validation:resolved, challenge:created
+
+All three tabs refresh on the same events, because an approval anywhere moves
+every board.
+
+
+Daily quests  /app/quests
+-------------------------
+
+src/pages/Quests.tsx
+
+Two halves. The top shows the quests students see today, locked. The bottom
+lets staff hand-pick tomorrow's three: swap a slot, remove one, or fill an
+empty slot from the bank. Below that is the bank itself, searchable, with add
+and delete.
+
+	calls     getDailyQuests, setDailyQuests, clearDailyOverride,
+	          getAllQuests, addQuest, removeQuest
+	realtime  quests:updated
+
+Today is deliberately read-only. Changing the set a student has already
+started their day against would invalidate progress they can see on screen.
+Editing tomorrow writes a daily_quest_overrides row; clearing it returns that
+date to the deterministic rotation. See the backend's docs/gamification.md.
+
+
+Not implemented
+---------------
+
+The sidebar in src/components/SideBar.tsx lists two more items:
+
+	/app/activities   Activities
+	/app/settings     Settings
+
+Neither route exists in App.tsx, so both fall through to the catch-all and
+redirect to Overview. The activity catalogue and admin account management were
+in scope and are served by existing backend endpoints (/area and /admin
+respectively). Building these two pages is the largest single piece of
+outstanding work in this repository. See docs/maintenance.md.

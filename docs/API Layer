@@ -1,0 +1,108 @@
+API layer
+=========
+
+Everything that crosses the network lives in src/api/. No page imports axios.
+
+
+Files
+-----
+
+	api/client.ts                 the axios instance, tokenStorage, interceptors
+	api/socket.ts                 the single Socket.IO connection
+	api/challenges/challengeApi.ts    challenges, participants, approvals
+	api/challenges/challengeTypes.ts
+	api/quest/questApi.ts             quest bank and daily rotation
+	api/quest/questTypes.ts
+	api/activities/activityApi.ts     activity catalogue
+	api/activities/activityType.ts
+	api/leaderboard/leaderboardApi.ts faculty and campus boards
+
+Domain folders each hold the calls and the response types for one area of the
+backend. A page imports the function and the type, never the URL.
+
+
+Base URL
+--------
+
+	const api = axios.create({
+	  baseURL: import.meta.env.VITE_API_PATH || "http://localhost:8000/api",
+	});
+
+The backend mounts every route under /api. VITE_API_PATH must therefore
+include it. Omitting it makes every request, including login, return 404.
+
+api/socket.ts derives the socket origin from the same value by stripping a
+trailing /api. One variable configures both.
+
+
+Tokens
+------
+
+tokenStorage in client.ts is the only code that touches localStorage:
+
+	getAccessToken, getRefreshToken, setTokens, clearTokens
+
+A request interceptor attaches Authorization: Bearer <access token> to every
+outgoing call.
+
+
+Refresh
+-------
+
+The response interceptor implements single-flight refresh:
+
+1. A 401 on any request other than /auth/refresh marks the request for retry.
+2. If a refresh is already in progress the request is pushed onto a queue and
+   replayed when that refresh settles. Only one refresh call is ever in
+   flight.
+3. If the refresh succeeds the original request is retried once with the new
+   token.
+4. If the refresh itself 401s, tokens are cleared and a window event
+   auth:logout is dispatched. AuthContext listens for it and sends the user
+   back to /login.
+
+Step 4 is why a genuinely expired session does not recurse: the refresh URL is
+checked before the retry logic runs.
+
+
+Adding a call
+-------------
+
+1. Put the response shape in the domain's Types file. Match the backend
+   serializer field for field; if the serializer sends facultyKey and level,
+   the type carries them.
+2. Add an exported async function to the domain's Api file. Return the parsed
+   payload, not the axios response.
+3. Import it in the page. Load in an effect, set local state.
+4. If another admin or a student can change what you just fetched, subscribe
+   to the matching socket event and call the same loader again.
+
+
+Socket usage
+------------
+
+	connectSocket()     called once by AdminLayout after login
+	getSocket()         used by pages to attach listeners
+	disconnectSocket()  called on sign out
+
+A page attaches listeners in an effect and must remove them in the cleanup
+return. Forgetting the cleanup leaves handlers bound to unmounted components
+and produces a slow leak plus duplicated refetches on every navigation.
+
+	useEffect(() => {
+	  const socket = getSocket();
+	  if (!socket) return;
+	  socket.on("validation:resolved", refresh);
+	  return () => { socket.off("validation:resolved", refresh); };
+	}, [refresh]);
+
+The refresh callback should be wrapped in useCallback so the effect does not
+rebind on every render.
+
+
+Error handling
+--------------
+
+There is no global error toast. Pages surface failures inline where the action
+was taken. context/ToastContext.tsx exists but is not wired into the tree; see
+docs/maintenance.md before adopting it.

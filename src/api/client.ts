@@ -1,7 +1,13 @@
 import axios from "axios";
 
+// IMPORTANT: the backend mounts every route under "/api" (see app.use("/api", routes)
+// in the backend's src/index.ts). The base URL MUST therefore include "/api" or
+// every request (including /auth/login) 404s.
+//
+// Set VITE_API_PATH in an admin ".env" file to override, e.g.
+//   VITE_API_PATH=http://localhost:8000/api
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_PATH || "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_PATH || "http://localhost:8000/api",
 });
 
 export const tokenStorage = {

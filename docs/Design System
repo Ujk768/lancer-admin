@@ -1,0 +1,116 @@
+Design system
+=============
+
+One stylesheet
+--------------
+
+src/index.css is the whole system, imported once by src/main.tsx. There is no
+CSS module, no Tailwind, no styled-components.
+
+src/App.css exists in the repository and is imported by nothing. It is dead.
+Styles added to it will never load. This has already cost the project a full
+rebuild of the leaderboard; do not repeat it. See docs/maintenance.md.
+
+
+Tokens
+------
+
+Declared on :root at the top of index.css. Use the variables, not the literals.
+
+	Structure    --navy-900 #0b1730   --navy-800 #101e3f
+	             --navy-700 #16264d   --navy-600 #22335e
+	Accent       --gold #e9c45a       --gold-deep #cfa63b
+	             --gold-soft rgba(233,196,90,.14)
+	Surfaces     --canvas #f3f4f8     --surface #ffffff
+	Text         --ink #16223f        --slate #5c6478
+	Lines        --line #dfe3ec       --line-strong #c9cfdd
+	Status       --green #2f8f5b / --green-soft
+	             --red #c4453c / --red-soft
+	             --amber-soft #fdf6e3
+
+	Type         --display Chakra Petch   headings, athletic identity
+	             --body    Archivo        all reading text
+	             --mono    IBM Plex Mono  numbers, XP, results, dates
+
+	Shape        --radius 10px  --radius-lg 14px
+	             --shadow-sm, --shadow-md
+	             --sidebar-w 236px
+
+Gold is the only functional accent. It marks the primary action, the active
+nav item and first place. Using it decoratively costs it its meaning.
+
+Numbers are always mono. A leaderboard column of proportional digits does not
+align and reads as sloppy.
+
+
+Class families
+--------------
+
+Classes are grouped by prefix. Match an existing family before inventing one.
+
+	.shell .main .sidebar        application chrome
+	.card .card-head .card-pad   the standard surface
+	.eyebrow                     small uppercase label above a title
+	.btn .btn-gold .btn-navy .btn-ghost .btn-danger .btn-sm .btn-approve
+	.field .field-error .form-grid .chip-field .chip-add
+	.challenge-grid .challenge-card .cc-*    challenge cards
+	.detail-hero .detail-facts .detail-podium .dp-* .fact-row
+	.lb-*                        leaderboard boards: lb-podium, lb-row,
+	                             lb-medal, lb-plinth, lb-col, lb-rank,
+	                             lb-avatar-wrap, lb-id-name, lb-id-fac,
+	                             lb-list
+	.area-card .activity-chip .add-area-form
+	.auth-card .auth-error
+	.empty                       empty state block
+
+The .lb-* family is the one to know. AdminLeaderboardBoard is built on it and
+both the Leaderboards page and ChallengeDetail render through that component.
+A new board variant should extend .lb-* rather than start a parallel set.
+
+
+Icons
+-----
+
+src/components/Icon.tsx holds every icon as an SVG path in a paths map, keyed
+by name. Usage is <Icon name="validate" />.
+
+There is no icon package and none should be added. The sidebar keys currently
+in use are overview, challenge, validate, podium, quest, activity, settings.
+To add an icon, add a path to the map.
+
+src/components/Logo.tsx draws the Lancers shield.
+
+
+Avatars and faculty badges
+--------------------------
+
+Nine faculties, keys faculty1 through faculty9, assigned by the backend
+serializer from the faculty display string. The key selects the art set; the
+student's level selects the tier within it.
+
+	components/facultyTheme.ts    the nine themes, key lookup, and
+	                              avatarVariantFromLevel
+	components/FacultyAvatar.tsx  renders /avatars/<key>/<tier>.png
+	components/FacultyBadge.tsx   renders /facultyBadges/<n>.png inside a
+	                              translucent crest box tinted with the
+	                              faculty accent
+	components/flags.ts           country code to flag character
+
+The PNGs live in public/ and are served at the web root. They are copies of the
+mobile app's assets. An SVG crest is drawn as a fallback if an image fails to
+resolve, so a board never renders an empty slot.
+
+Tier boundaries mirror the backend: 1-2 Squire, 3-7 Knight, 8-13 Hero,
+14-19 Legend, 20-25 Lancer.
+
+
+Rules
+-----
+
+* No emoji in UI copy. Flag characters in the leaderboard identity column are
+  the single exception and are data, not decoration.
+* No em dashes in UI copy.
+* Motion respects prefers-reduced-motion; the media query at the top of
+  index.css disables transitions and it should stay.
+* Focus is visible: a 2px --gold-deep outline. Do not remove outlines.
+* Confirmation dialogs guard anything irreversible: delete, approve, reject.
